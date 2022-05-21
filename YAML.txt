@@ -1,0 +1,57 @@
+apiVersion: kubeflow.org/v1
+kind: MPIJob
+metadata:
+  name: nb2
+spec:
+  mpiReplicaSpecs:
+    Launcher:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - args:
+            - mpirun
+            - -n
+            - '4'
+            - /opt/run/pi
+            image: aprilwuyou/mpi-nb2:v9
+            imagePullPolicy: IfNotPresent
+            name: mpi-nb2-launcher
+            securityContext:
+              runAsUser: 1000
+            volumeMounts:
+            - mountPath: /opt/run
+              name: outdata
+          volumes:
+          - hostPath:
+              path: /data
+              type: DirectoryOrCreate
+            name: outdata
+    Worker:
+      replicas: 4
+      template:
+        spec:
+          containers:
+          - args:
+            - -De
+            - -f
+            - /home/mpiuser/.sshd_config
+            command:
+            - /usr/sbin/sshd
+            image: aprilwuyou/mpi-nb2:v9
+            name: mpi-nb2-worker
+            securityContext:
+              runAsUser: 1000
+            volumeMounts:
+            - mountPath: /opt/run
+              name: outdata
+          volumes:
+          - hostPath:
+              path: /data
+              type: DirectoryOrCreate
+            name: outdata
+  runPolicy:
+    cleanPodPolicy: Running
+    ttlSecondsAfterFinished: 60
+  slotsPerWorker: 1
+  sshAuthMountPath: /home/mpiuser/.ssh

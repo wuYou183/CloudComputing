@@ -1,0 +1,15 @@
+FROM mpioperator/openmpi-builder  as builder
+
+COPY nbody2.cpp /src/nbody2.cpp
+RUN mpic++ /src/nbody2.cpp -o /pi
+
+
+FROM mpioperator/mpi-pi:intel
+
+COPY --from=builder /pi /opt/run/pi
+COPY ./a.sh  /home/mpiuser/a.sh
+RUN echo "/usr/local/lib" >> /etc/ld.so.conf && ldconfig
+
+RUN apt-get update 
+RUN apt-get install libopenblas-base libopenmpi-dev -y 
+WORKDIR /opt/run
